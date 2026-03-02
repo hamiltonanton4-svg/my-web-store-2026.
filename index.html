@@ -3,203 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OPALWAVE | Archive</title>
+    <title>My Stripe Shop</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://js.stripe.com/v3/"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,wght@0,400;1,400&family=Inter:wght@300;600&display=swap" rel="stylesheet">
-    <style>
-        :root { --emerald: #10b981; }
-        html, body { background-color: #000 !important; margin: 0; padding: 0; cursor: crosshair; overflow-x: hidden; font-family: 'Inter', sans-serif; color: #fff; }
-        .serif { font-family: 'Bodoni Moda', serif; }
-        .page { display: none; min-height: 100vh; position: relative; width: 100%; }
-        .active { display: flex !important; flex-direction: column; }
-        
-        #video-container { position: absolute; inset: 0; z-index: 0; background: #000; overflow: hidden; pointer-events: none; }
-        #hero-video { width: 100vw; height: 100vh; object-fit: cover; opacity: 0; transition: opacity 2s ease-in-out; filter: contrast(1.2) brightness(0.7); }
-        .video-overlay { position: absolute; inset: 0; background: radial-gradient(circle at center, transparent 0%, #000 100%); z-index: 1; }
-
-        .emerald-glow { color: var(--emerald); text-shadow: 0 0 20px rgba(16, 185, 129, 0.6); }
-        .btn-lux { background: var(--emerald); color: #000; padding: 15px 35px; text-transform: uppercase; font-size: 10px; font-weight: bold; letter-spacing: 4px; transition: 0.4s; z-index: 50; }
-        .btn-lux:hover:not(:disabled) { background: #fff; box-shadow: 0 0 40px rgba(16, 185, 129, 0.5); }
-
-        .admin-card { background: rgba(0,0,0,0.85); border: 1px solid rgba(16, 185, 129, 0.2); padding: 1.5rem; backdrop-filter: blur(20px); }
-        input, textarea { background: #111; border: 1px solid #333; padding: 12px; color: white; font-size: 11px; outline: none; width: 100%; }
-        
-        .product-image-container { width: 100%; height: 500px; overflow-x: scroll; display: flex; scroll-snap-type: x mandatory; scrollbar-width: none; }
-        .product-image-container::-webkit-scrollbar { display: none; }
-        .product-image-container img { flex-shrink: 0; width: 100%; height: 100%; object-fit: cover; scroll-snap-align: start; grayscale: 100%; transition: 0.7s; cursor: pointer; }
-        .product-image-container:hover img { grayscale: 0%; }
-        .dot { width: 4px; height: 4px; background: rgba(255,255,255,0.2); border-radius: 50%; }
-    </style>
 </head>
-<body>
-
-    <nav class="fixed top-0 w-full z-[100] p-8 flex justify-between items-center mix-blend-difference">
-        <div onclick="showPage('home')" class="serif text-2xl font-bold tracking-[0.4em] cursor-pointer text-white">OPALWAVE</div>
-        <div class="flex space-x-10 text-[10px] uppercase tracking-widest font-bold text-white">
-            <button onclick="showPage('shop')">Archive</button>
-            <button onclick="showPage('checkout')">Bag (<span id="bag-count">0</span>)</button>
-        </div>
-    </nav>
-
-    <div id="home" class="page active items-center justify-center text-center overflow-hidden">
-        <div id="video-container">
-            <video id="hero-video" preload="auto" autoplay muted loop playsinline>
-                <source src="https://v1.nitrocdn.com/fMvOaNStfXmOIkMvXzXzXzXz/assets/static/optimized/rev-1f1f1f/smoke.mp4" type="video/mp4">
-            </video>
-            <div class="video-overlay"></div>
-        </div>
-        <div class="relative z-10 flex flex-col items-center">
-            <p onclick="adminGate()" class="text-[10px] uppercase tracking-[1.5em] mb-6 opacity-30 font-bold cursor-pointer hover:text-emerald-500 transition">Nexus v7.0 LIVE</p>
-            <h1 class="serif text-[6rem] md:text-[12rem] italic leading-none mb-12 tracking-tighter">Vanta</h1>
-            <button onclick="showPage('shop')" class="btn-lux">Access Archive</button>
-        </div>
-    </div>
-
-    <div id="admin" class="page px-6 md:px-20 pt-32 pb-20 bg-[#050505]">
-        <div class="max-w-7xl mx-auto w-full">
-            <div class="flex flex-col md:flex-row justify-between items-end mb-16 gap-8 border-b border-emerald-500/20 pb-12 text-white">
-                <h2 class="serif text-7xl italic emerald-glow">Command</h2>
-                <div class="admin-card text-center min-w-[150px]"><p class="text-[8px] opacity-40 uppercase">Global Rev</p><p id="rev-total" class="text-xl emerald-glow">$0</p></div>
-            </div>
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 text-white">
-                <div class="admin-card"><h3 class="text-[11px] font-bold uppercase mb-6 opacity-60">Manifest</h3><div id="admin-orders" class="space-y-4 text-[10px] max-h-80 overflow-y-auto uppercase">Standby...</div></div>
-                <div class="admin-card">
-                    <h3 class="text-[11px] font-bold uppercase mb-6 opacity-60">Add Multi-Drop</h3>
-                    <div class="flex flex-col gap-4">
-                        <input id="new-p-name" placeholder="Product Name">
-                        <input id="new-p-price" type="number" placeholder="Price">
-                        <textarea id="new-p-imgs" placeholder="URLs (split by comma)"></textarea>
-                        <button onclick="saveNewProduct()" class="btn-lux">Push to DB</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="shop" class="page px-10 pt-40 bg-[#0a0a0a]">
-        <div class="max-w-7xl mx-auto w-full pb-40">
-            <h2 class="serif text-5xl italic mb-12 emerald-glow text-center">Allocations</h2>
-            <div id="product-grid" class="grid grid-cols-1 md:grid-cols-3 gap-10"></div>
-        </div>
-    </div>
-
-    <div id="checkout" class="page px-10 pt-40 max-w-xl mx-auto text-center justify-center">
-        <h2 class="serif text-8xl italic mb-10 emerald-glow">Bag</h2>
-        <div id="bag-items" class="mb-10 text-[10px] uppercase border-y border-white/10 py-10 space-y-6">Empty</div>
-        <input id="order-email" type="email" placeholder="IDENTITY EMAIL" class="mb-6 w-full text-center bg-transparent border-b border-emerald-500/30 py-4 outline-none uppercase tracking-widest">
-        <button id="checkout-btn" onclick="placeOrder()" class="btn-lux w-full">Finalize</button>
+<body class="bg-gray-100 p-10">
+    <div class="max-w-md mx-auto bg-white p-8 rounded-lg shadow-md">
+        <h1 class="text-2xl font-bold mb-4">Awesome Product</h1>
+        <p class="text-gray-600 mb-6">Get this amazing item for just $20.00!</p>
+        
+        <button id="checkout-button" class="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded hover:bg-blue-700 transition">
+            Buy Now
+        </button>
+        
+        <p id="error-message" class="text-red-500 mt-4 hidden"></p>
     </div>
 
     <script>
-        const SB_URL = 'https://gqsqomiyocwwpjsitcqw.supabase.co';
-        const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdxc3FvbWl5b2N3d3Bqc2l0Y3F3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIxNjQ1MTYsImV4cCI6MjA4Nzc0MDUxNn0.rHY0P8XrkF3u9JQkJRgfg6_HhyqEGABFGt8ghEo1MrY';
-        
-        // LIVE PRODUCTION KEY
-        const STRIPE_PK = 'pk_live_51T5VLIQTBolXed9akrMjf3yYGLKGwt8pvMQcB7NontbKSIspqwNghUeRaa1kjq11AuhVTtJzBIDZV5vkDJ2E1swg00xDAl0kmY'; 
-        
-        const _client = supabase.createClient(SB_URL, SB_KEY);
-        const stripe = Stripe(STRIPE_PK);
-        let bag = [];
+        const checkoutButton = document.getElementById('checkout-button');
+        const errorMessage = document.getElementById('error-message');
 
-        const video = document.getElementById('hero-video');
-        function fireVideo() { video.play().then(() => { video.style.opacity = "0.5"; }).catch(() => {}); }
-        window.addEventListener('load', fireVideo);
-        document.addEventListener('touchstart', fireVideo, {once: true});
+        checkoutButton.addEventListener('click', async () => {
+            checkoutButton.disabled = true;
+            checkoutButton.innerText = 'Loading...';
 
-        function adminGate() { if(prompt("PASSCODE:") === "OPAL2026") showPage('admin'); }
-
-        function showPage(id) {
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            if(id === 'shop') loadShop();
-            if(id === 'admin') loadAdmin();
-            if(id === 'checkout') renderBag();
-            window.scrollTo(0,0);
-        }
-
-        async function loadShop() {
-            const { data: items } = await _client.from('products').select('*');
-            document.getElementById('product-grid').innerHTML = items?.map(p => {
-                const imgList = p.image.split(',');
-                return `
-                <div class="group">
-                    <div class="product-image-container border border-white/5 bg-[#111]">
-                        ${imgList.map(url => `<img src="${url.trim()}" onclick="addToBag('${p.name}', ${p.price})">`).join('')}
-                    </div>
-                    <div class="flex justify-center gap-1 mt-2">${imgList.map(() => `<div class="dot"></div>`).join('')}</div>
-                    <div class="flex justify-between text-[11px] font-bold uppercase tracking-widest mt-4">
-                        <span>${p.name}</span><span class="emerald-glow">$${p.price}</span>
-                    </div>
-                </div>`;
-            }).join('') || "Archive Secured.";
-        }
-
-        function addToBag(name, price) {
-            bag.push({ id: Date.now() + Math.random(), name, price });
-            updateBagUI();
-            alert(name + " LOGGED.");
-        }
-
-        function removeFromBag(uniqueId) {
-            bag = bag.filter(item => item.id !== uniqueId);
-            updateBagUI();
-            renderBag();
-        }
-
-        function updateBagUI() { document.getElementById('bag-count').innerText = bag.length; }
-
-        function renderBag() {
-            const container = document.getElementById('bag-items');
-            if(bag.length === 0) { container.innerHTML = "BAG EMPTY"; return; }
-            container.innerHTML = bag.map(item => `
-                <div class="flex justify-between items-center py-2 border-b border-white/5">
-                    <div class="text-left"><p class="mb-0 tracking-widest font-bold">${item.name}</p><p class="emerald-glow opacity-60">$${item.price}</p></div>
-                    <button onclick="removeFromBag(${item.id})" class="text-[9px] opacity-40 hover:text-red-500 uppercase">Remove</button>
-                </div>
-            `).join('') + `<div class="pt-6 text-right text-lg serif italic emerald-glow">Total: $${bag.reduce((s,i)=>s+i.price,0)}</div>`;
-        }
-
-        async function loadAdmin() {
-            const { data: orders } = await _client.from('orders').select('*');
-            let t = 0; orders?.forEach(o => { t += o.total; });
-            document.getElementById('rev-total').innerText = "$" + t.toFixed(2);
-            document.getElementById('admin-orders').innerHTML = orders?.map(o => `
-                <div class="border-b border-white/10 pb-2 mb-2">
-                    <div class="emerald-glow font-bold text-[9px]">${o.user_email}</div>
-                    <div class="opacity-40 italic">$${o.total}</div>
-                </div>`).join('') || "Standby...";
-        }
-
-        async function saveNewProduct() {
-            const name = document.getElementById('new-p-name').value;
-            const price = parseInt(document.getElementById('new-p-price').value);
-            const image = document.getElementById('new-p-imgs').value;
-            const { error } = await _client.from('products').insert([{ name, price, image }]);
-            if(!error) { alert("Pushed."); loadAdmin(); }
-        }
-
-        async function placeOrder() {
-            const email = document.getElementById('order-email').value;
-            const btn = document.getElementById('checkout-btn');
-            if(!email || !bag.length) return alert("MISSING IDENTITY.");
-            btn.innerText = "AUTHENTICATING..."; btn.disabled = true;
             try {
+                // IMPORTANT: We use a relative path here so it works on ANY Netlify URL
                 const response = await fetch('/.netlify/functions/create-checkout', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ items: bag, email: email })
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
                 });
-                const session = await response.json();
-                const total = bag.reduce((s,i)=>s+i.price,0);
-                await _client.from('orders').insert([{ user_email: email, total: total, items: JSON.stringify(bag) }]);
-                await stripe.redirectToCheckout({ sessionId: session.id });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Check the Netlify Functions tab!');
+                }
+
+                const { url } = await response.json();
+                window.location.href = url; // Send user to Stripe
+                
             } catch (err) {
-                alert("STATION OFFLINE. CHECK DEPLOYMENT.");
-                btn.innerText = "FINALIZE"; btn.disabled = false;
+                console.error('Error:', err);
+                errorMessage.innerText = err.message;
+                errorMessage.classList.remove('hidden');
+                checkoutButton.disabled = false;
+                checkoutButton.innerText = 'Buy Now';
             }
-        }
+        });
     </script>
 </body>
 </html>
